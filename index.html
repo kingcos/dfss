@@ -1008,6 +1008,9 @@
       bottom: 18px;
       z-index: 30;
       transform: translate(-50%, 140%);
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
       border: 1px solid rgba(17, 24, 39, .10);
       border-radius: var(--radius);
       background: #111827;
@@ -1015,12 +1018,15 @@
       padding: 11px 14px;
       box-shadow: var(--shadow);
       font-size: 14px;
-      transition: transform .22s ease;
+      transition: transform .22s ease, opacity .22s ease, visibility 0s linear .22s;
       max-width: min(520px, calc(100% - 24px));
     }
 
     .toast.is-visible {
       transform: translate(-50%, 0);
+      visibility: visible;
+      opacity: 1;
+      transition-delay: 0s;
     }
 
     .hidden {
@@ -2080,10 +2086,16 @@
       }
 
       function showToast(message) {
+        clearTimeout(showToast.timer);
+        clearTimeout(showToast.clearTimer);
         el.toast.textContent = message;
         el.toast.classList.add("is-visible");
-        clearTimeout(showToast.timer);
-        showToast.timer = setTimeout(() => el.toast.classList.remove("is-visible"), 1700);
+        showToast.timer = setTimeout(() => {
+          el.toast.classList.remove("is-visible");
+          showToast.clearTimer = setTimeout(() => {
+            if (!el.toast.classList.contains("is-visible")) el.toast.textContent = "";
+          }, 240);
+        }, 1700);
       }
 
       function resetLocalRecords() {
