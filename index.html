@@ -1,0 +1,2289 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>科目一快刷</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f3;
+      --panel: #ffffff;
+      --panel-soft: #f9faf6;
+      --text: #111827;
+      --muted: #5f6b7a;
+      --line: #dfe4da;
+      --line-strong: #c8d0c0;
+      --brand: #176b87;
+      --brand-dark: #0e4d63;
+      --brand-soft: #e6f4f7;
+      --accent: #c56a1a;
+      --good: #15803d;
+      --good-soft: #e7f7ec;
+      --bad: #b42318;
+      --bad-soft: #fff0ed;
+      --warn-soft: #fff7df;
+      --shadow: 0 18px 45px rgba(24, 38, 52, .10);
+      --radius: 8px;
+      --sidebar: 340px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-width: 320px;
+      background: var(--bg);
+      color: var(--text);
+      letter-spacing: 0;
+      overscroll-behavior-y: contain;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(23, 107, 135, .08), rgba(246, 247, 243, 0) 260px),
+        var(--bg);
+    }
+
+    body.focus-mode {
+      overflow: hidden;
+      background: #f9faf6;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .45;
+    }
+
+    :focus-visible {
+      outline: 3px solid rgba(23, 107, 135, .35);
+      outline-offset: 2px;
+    }
+
+    .skip-link {
+      position: fixed;
+      left: 16px;
+      top: 12px;
+      z-index: 20;
+      transform: translateY(-160%);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      color: var(--brand);
+      padding: 10px 14px;
+      text-decoration: none;
+      box-shadow: var(--shadow);
+      transition: transform .18s ease;
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
+    }
+
+    .app-shell {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) auto auto;
+      gap: 12px;
+      align-items: center;
+      min-height: 64px;
+      border: 1px solid rgba(200, 208, 192, .85);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, .92);
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(24, 38, 52, .08);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
+      min-width: 0;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.1;
+      font-weight: 800;
+      color: #10212b;
+    }
+
+    .brand p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .top-actions,
+    .stat-strip,
+    .control-row,
+    .answer-tools,
+    .nav-row,
+    .mode-tabs,
+    .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .stat-strip {
+      justify-content: flex-end;
+    }
+
+    .stat {
+      min-width: 76px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel-soft);
+      padding: 8px 10px;
+    }
+
+    .stat strong {
+      display: block;
+      color: var(--text);
+      font-size: 17px;
+      line-height: 1.1;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.1;
+    }
+
+    .icon-button,
+    .text-button,
+    .seg-button,
+    .option-button,
+    .pager-button,
+    .chip-button {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      color: var(--text);
+      transition: background .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+
+    .icon-button {
+      display: inline-grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      padding: 0;
+    }
+
+    .icon-button svg,
+    .text-button svg,
+    .pager-button svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      flex: 0 0 auto;
+    }
+
+    .icon-button:hover,
+    .text-button:hover,
+    .seg-button:hover,
+    .pager-button:hover,
+    .chip-button:hover {
+      border-color: var(--brand);
+      color: var(--brand-dark);
+      box-shadow: 0 8px 20px rgba(23, 107, 135, .12);
+    }
+
+    .icon-button.is-active,
+    .chip-button.is-active {
+      border-color: rgba(23, 107, 135, .36);
+      background: var(--brand-soft);
+      color: var(--brand-dark);
+    }
+
+    .text-button,
+    .pager-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 42px;
+      padding: 0 13px;
+      font-weight: 700;
+    }
+
+    .text-button.primary,
+    .pager-button.primary {
+      border-color: var(--brand);
+      background: var(--brand);
+      color: #fff;
+    }
+
+    .text-button.danger {
+      border-color: rgba(180, 35, 24, .28);
+      background: var(--bad-soft);
+      color: var(--bad);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) var(--sidebar);
+      gap: 16px;
+      align-items: start;
+      padding-top: 16px;
+    }
+
+    main {
+      min-width: 0;
+    }
+
+    .question-panel,
+    .side-panel,
+    .filter-panel,
+    .empty-state,
+    .loading-state {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, .94);
+      box-shadow: var(--shadow);
+    }
+
+    .question-panel {
+      min-height: calc(100vh - 120px);
+      overflow: hidden;
+    }
+
+    .progress-line {
+      height: 6px;
+      background: #edf0e9;
+    }
+
+    .progress-line span {
+      display: block;
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--brand), #3b8f72);
+      transition: width .25s ease;
+    }
+
+    .question-body {
+      padding: 20px;
+    }
+
+    .meta-row {
+      margin-bottom: 16px;
+    }
+
+    .chip,
+    .chip-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 30px;
+      border-radius: 999px;
+      padding: 5px 10px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
+      white-space: nowrap;
+    }
+
+    .chip.good {
+      background: var(--good-soft);
+      color: var(--good);
+      border-color: rgba(21, 128, 61, .22);
+    }
+
+    .chip.bad {
+      background: var(--bad-soft);
+      color: var(--bad);
+      border-color: rgba(180, 35, 24, .24);
+    }
+
+    .chip.warn {
+      background: var(--warn-soft);
+      color: #925200;
+      border-color: rgba(197, 106, 26, .22);
+    }
+
+    .question-title {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.48;
+      color: #111827;
+      font-weight: 800;
+    }
+
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin: 18px 0 2px;
+    }
+
+    .image-grid img {
+      display: block;
+      width: 100%;
+      max-height: 360px;
+      object-fit: contain;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #f3f5ef;
+    }
+
+    .options {
+      display: grid;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .option-button {
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr);
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      min-height: 62px;
+      padding: 12px 14px;
+      text-align: left;
+      font-size: 17px;
+      line-height: 1.45;
+    }
+
+    .option-button:hover {
+      border-color: var(--brand);
+      background: #fbfefd;
+      box-shadow: 0 10px 24px rgba(23, 107, 135, .10);
+    }
+
+    .option-button .label {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid var(--line-strong);
+      background: var(--panel-soft);
+      color: #314152;
+      font-weight: 800;
+    }
+
+    .option-button .value {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .option-button.is-selected {
+      border-color: var(--brand);
+      background: var(--brand-soft);
+    }
+
+    .option-button.is-correct {
+      border-color: rgba(21, 128, 61, .55);
+      background: var(--good-soft);
+      color: #14532d;
+    }
+
+    .option-button.is-correct .label {
+      border-color: rgba(21, 128, 61, .45);
+      background: #d9f2e2;
+      color: #14532d;
+    }
+
+    .option-button.is-wrong {
+      border-color: rgba(180, 35, 24, .45);
+      background: var(--bad-soft);
+      color: #7a1b13;
+    }
+
+    .option-button.is-wrong .label {
+      border-color: rgba(180, 35, 24, .35);
+      background: #ffe1dc;
+      color: #7a1b13;
+    }
+
+    .option-button.is-readonly {
+      cursor: default;
+    }
+
+    .option-button.is-readonly:hover {
+      box-shadow: none;
+    }
+
+    .answer-tools {
+      justify-content: space-between;
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+
+    .answer-result {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-height: 38px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .answer-result svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      flex: 0 0 auto;
+    }
+
+    .answer-result strong {
+      color: var(--text);
+    }
+
+    .explanation {
+      display: none;
+      margin-top: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfcf9;
+      padding: 15px;
+      color: #2d3748;
+      line-height: 1.65;
+    }
+
+    .explanation.is-visible {
+      display: block;
+    }
+
+    .explanation h2 {
+      margin: 0 0 8px;
+      font-size: 15px;
+      color: var(--muted);
+    }
+
+    .nav-row {
+      justify-content: space-between;
+      margin-top: 18px;
+    }
+
+    .focus-control {
+      position: fixed;
+      z-index: 40;
+      display: none;
+      place-items: center;
+      width: 50px;
+      height: 50px;
+      border: 1px solid rgba(200, 208, 192, .85);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .92);
+      color: #172033;
+      box-shadow: 0 14px 34px rgba(24, 38, 52, .14);
+      backdrop-filter: blur(12px);
+    }
+
+    .focus-control svg {
+      width: 24px;
+      height: 24px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .focus-control:hover {
+      border-color: var(--brand);
+      color: var(--brand-dark);
+    }
+
+    .focus-prev {
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .focus-next {
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .focus-exit {
+      right: 18px;
+      top: 18px;
+    }
+
+    body.focus-mode .focus-control {
+      display: grid;
+    }
+
+    body.focus-mode .topbar,
+    body.focus-mode .side-stack,
+    body.focus-mode .skip-link,
+    body.focus-mode .progress-line,
+    body.focus-mode .meta-row,
+    body.focus-mode .nav-row {
+      display: none !important;
+    }
+
+    body.focus-mode .explanation {
+      display: none !important;
+    }
+
+    body.focus-mode.study-active .explanation.is-visible {
+      display: block !important;
+      align-self: start;
+      max-height: calc(30vh * var(--focus-scale));
+      overflow: auto;
+      margin: 0;
+      padding: calc(18px * var(--focus-scale)) calc(20px * var(--focus-scale));
+      font-size: clamp(calc(18px * var(--focus-scale)), calc(1.7vw * var(--focus-scale)), calc(24px * var(--focus-scale)));
+      line-height: 1.6;
+    }
+
+    body.focus-mode.study-active .explanation.is-visible h2 {
+      display: none;
+    }
+
+    body.focus-mode .app-shell {
+      width: 100vw;
+      height: 100dvh;
+      padding: 0;
+    }
+
+    body.focus-mode .layout {
+      display: block;
+      height: 100dvh;
+      padding: 0;
+    }
+
+    body.focus-mode main,
+    body.focus-mode .question-panel {
+      height: 100dvh;
+      min-height: 0;
+    }
+
+    body.focus-mode .question-panel {
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      background: #fff;
+    }
+
+    body.focus-mode .question-body {
+      --focus-scale: 1;
+      display: grid;
+      grid-template-rows: minmax(0, auto) minmax(0, auto) minmax(0, 1fr) auto minmax(0, auto);
+      align-content: center;
+      gap: calc(18px * var(--focus-scale));
+      width: min(1180px, calc(100vw - 130px));
+      height: 100dvh;
+      margin: 0 auto;
+      padding: calc(44px * var(--focus-scale)) 0;
+      overflow: hidden;
+    }
+
+    body.focus-mode.focus-tight .question-body {
+      --focus-scale: .82;
+    }
+
+    body.focus-mode.focus-ultra .question-body {
+      --focus-scale: .68;
+    }
+
+    body.focus-mode .question-title {
+      align-self: end;
+      font-size: clamp(24px, calc(4vw * var(--focus-scale)), 48px);
+      line-height: 1.28;
+      text-align: left;
+    }
+
+    body.focus-mode .image-grid {
+      align-self: center;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: calc(10px * var(--focus-scale));
+      max-height: calc(34vh * var(--focus-scale));
+      margin: 0;
+      overflow: hidden;
+    }
+
+    body.focus-mode .image-grid:empty {
+      display: none;
+    }
+
+    body.focus-mode .image-grid img {
+      max-height: calc(32vh * var(--focus-scale));
+    }
+
+    body.focus-mode .options {
+      align-self: start;
+      gap: calc(12px * var(--focus-scale));
+      margin-top: 0;
+    }
+
+    body.focus-mode .option-button {
+      grid-template-columns: calc(44px * var(--focus-scale)) minmax(0, 1fr);
+      min-height: auto;
+      padding: calc(14px * var(--focus-scale)) calc(18px * var(--focus-scale));
+      font-size: clamp(17px, calc(2.2vw * var(--focus-scale)), 28px);
+      line-height: 1.34;
+    }
+
+    body.focus-mode .option-button .label {
+      width: calc(44px * var(--focus-scale));
+      height: calc(44px * var(--focus-scale));
+    }
+
+    body.focus-mode .answer-tools {
+      display: none !important;
+      justify-content: center;
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+
+    body.focus-mode .answer-tools .control-row {
+      display: none;
+    }
+
+    body.focus-mode .answer-result {
+      justify-content: center;
+      min-height: 42px;
+      border: 1px solid rgba(21, 128, 61, .22);
+      border-radius: var(--radius);
+      background: var(--good-soft);
+      color: var(--good);
+      padding: 10px 14px;
+      font-size: clamp(16px, calc(1.7vw * var(--focus-scale)), 22px);
+    }
+
+    .side-stack {
+      position: sticky;
+      top: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .side-panel,
+    .filter-panel {
+      padding: 14px;
+    }
+
+    .study-progress {
+      height: 10px;
+      border-radius: 999px;
+      background: #edf0e9;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      margin-bottom: 12px;
+    }
+
+    .study-progress span {
+      display: block;
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--brand), #3b8f72);
+      transition: width .25s ease;
+    }
+
+    .progress-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .progress-metric {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel-soft);
+      padding: 9px 10px;
+    }
+
+    .progress-metric strong {
+      display: block;
+      font-size: 18px;
+      line-height: 1.1;
+      color: var(--text);
+    }
+
+    .progress-metric span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .progress-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .side-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .side-heading h2 {
+      margin: 0;
+      color: #182635;
+      font-size: 15px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .select,
+    .search-input {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--text);
+      padding: 0 11px;
+    }
+
+    .search-input {
+      padding-left: 36px;
+    }
+
+    .search-wrap {
+      position: relative;
+    }
+
+    .search-wrap svg {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      width: 18px;
+      height: 18px;
+      transform: translateY(-50%);
+      color: var(--muted);
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      pointer-events: none;
+    }
+
+    .mode-tabs {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .seg-button {
+      min-height: 38px;
+      padding: 0 8px;
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .seg-button.is-active {
+      border-color: var(--brand);
+      background: var(--brand);
+      color: #fff;
+    }
+
+    .toggle-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 42px;
+      border-top: 1px solid var(--line);
+      padding-top: 10px;
+      margin-top: 8px;
+      color: #263443;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-flex;
+      width: 50px;
+      height: 28px;
+      flex: 0 0 auto;
+    }
+
+    .switch input {
+      position: absolute;
+      opacity: 0;
+      inset: 0;
+      cursor: pointer;
+    }
+
+    .switch span {
+      width: 100%;
+      height: 100%;
+      border-radius: 999px;
+      background: #d8dfd2;
+      border: 1px solid var(--line-strong);
+      transition: background .18s ease, border-color .18s ease;
+    }
+
+    .switch span::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(17, 24, 39, .20);
+      transition: transform .18s ease;
+    }
+
+    .switch input:checked + span {
+      border-color: var(--brand);
+      background: var(--brand);
+    }
+
+    .switch input:checked + span::after {
+      transform: translateX(22px);
+    }
+
+    .question-map {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+      gap: 6px;
+      max-height: 170px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding-right: 2px;
+    }
+
+    .map-jump {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .map-jump input {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--text);
+      padding: 0 10px;
+    }
+
+    .map-jump button {
+      min-height: 38px;
+      padding: 0 12px;
+    }
+
+    .map-button {
+      min-width: 0;
+      height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel-soft);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      transition: background .18s ease, border-color .18s ease, color .18s ease;
+    }
+
+    .map-button:hover {
+      border-color: var(--brand);
+      color: var(--brand-dark);
+    }
+
+    .map-button.is-current {
+      border-color: var(--brand);
+      background: var(--brand);
+      color: #fff;
+    }
+
+    .map-button.is-correct {
+      border-color: rgba(21, 128, 61, .25);
+      background: var(--good-soft);
+      color: var(--good);
+    }
+
+    .map-button.is-wrong {
+      border-color: rgba(180, 35, 24, .25);
+      background: var(--bad-soft);
+      color: var(--bad);
+    }
+
+    .map-button.is-studied {
+      border-color: rgba(23, 107, 135, .22);
+      background: var(--brand-soft);
+      color: var(--brand-dark);
+    }
+
+    .map-button.is-bookmarked {
+      box-shadow: inset 0 -3px 0 var(--accent);
+    }
+
+    .mini-note {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .empty-state,
+    .loading-state {
+      display: grid;
+      place-items: center;
+      min-height: calc(100vh - 120px);
+      padding: 28px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .empty-state h2,
+    .loading-state h2 {
+      margin: 0 0 8px;
+      color: var(--text);
+      font-size: 20px;
+    }
+
+    .spinner {
+      width: 42px;
+      height: 42px;
+      margin: 0 auto 18px;
+      border-radius: 50%;
+      border: 4px solid #dbe2d7;
+      border-top-color: var(--brand);
+      animation: spin .8s linear infinite;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      z-index: 30;
+      transform: translate(-50%, 140%);
+      border: 1px solid rgba(17, 24, 39, .10);
+      border-radius: var(--radius);
+      background: #111827;
+      color: #fff;
+      padding: 11px 14px;
+      box-shadow: var(--shadow);
+      font-size: 14px;
+      transition: transform .22s ease;
+      max-width: min(520px, calc(100% - 24px));
+    }
+
+    .toast.is-visible {
+      transform: translate(-50%, 0);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 1080px) {
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+
+      .stat-strip,
+      .top-actions {
+        justify-content: flex-start;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .side-stack {
+        position: static;
+      }
+
+      .question-map {
+        max-height: 132px;
+      }
+
+      .question-panel {
+        min-height: auto;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app-shell {
+        padding: 10px;
+      }
+
+      .brand h1 {
+        font-size: 21px;
+      }
+
+      .stat-strip {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .stat {
+        min-width: 0;
+      }
+
+      .question-body {
+        padding: 15px;
+      }
+
+      .question-title {
+        font-size: 20px;
+      }
+
+      .option-button {
+        grid-template-columns: 34px minmax(0, 1fr);
+        min-height: 58px;
+        font-size: 16px;
+        padding: 11px;
+      }
+
+      .option-button .label {
+        width: 34px;
+        height: 34px;
+      }
+
+      .mode-tabs {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .progress-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .question-map {
+        grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
+        max-height: 116px;
+      }
+
+      body.focus-mode .question-body {
+        width: calc(100vw - 32px);
+        padding: calc(84px * var(--focus-scale)) 0 calc(76px * var(--focus-scale));
+        gap: calc(14px * var(--focus-scale));
+      }
+
+      body.focus-mode .question-title {
+        font-size: clamp(20px, calc(7vw * var(--focus-scale)), 32px);
+      }
+
+      body.focus-mode .option-button {
+        grid-template-columns: calc(38px * var(--focus-scale)) minmax(0, 1fr);
+        font-size: clamp(15px, calc(5vw * var(--focus-scale)), 22px);
+      }
+
+      body.focus-mode .option-button .label {
+        width: calc(38px * var(--focus-scale));
+        height: calc(38px * var(--focus-scale));
+      }
+
+      body.focus-mode .focus-control {
+        width: 44px;
+        height: 44px;
+      }
+
+      body.focus-mode .focus-prev {
+        left: 12px;
+        top: auto;
+        bottom: 12px;
+        transform: none;
+      }
+
+      body.focus-mode .focus-next {
+        right: 12px;
+        top: auto;
+        bottom: 12px;
+        transform: none;
+      }
+
+      body.focus-mode .focus-exit {
+        right: 12px;
+        top: 12px;
+      }
+
+      .nav-row,
+      .answer-tools {
+        align-items: stretch;
+      }
+
+      .nav-row .control-row,
+      .answer-tools .control-row {
+        width: 100%;
+      }
+
+      .pager-button,
+      .text-button {
+        flex: 1 1 auto;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#questionTitle">跳到题目</a>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <h1>科目一快刷</h1>
+        <p id="sourceStatus">正在加载题库...</p>
+      </div>
+      <div class="stat-strip" aria-label="刷题统计">
+        <div class="stat"><strong id="statPosition">0/0</strong><span>本轮</span></div>
+        <div class="stat"><strong id="statAccuracy">0%</strong><span>掌握率</span></div>
+        <div class="stat"><strong id="statStreak">0</strong><span>连对</span></div>
+        <div class="stat"><strong id="statWrong">0</strong><span>错题</span></div>
+      </div>
+      <div class="top-actions">
+        <button class="icon-button" id="focusBtn" type="button" title="专注模式" aria-label="专注模式">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+        </button>
+        <button class="icon-button" id="shuffleBtn" type="button" title="随机重排" aria-label="随机重排">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m18 14 4 4-4 4"/><path d="m18 2 4 4-4 4"/><path d="M2 18h1.8c3 0 5.3-2.4 7.5-6.2C13.2 8.4 15.3 6 18.2 6H22"/><path d="M2 6h1.8c1.7 0 3.1.8 4.4 2.2"/><path d="M13 15.8c1.5 1.5 3.1 2.2 5.2 2.2H22"/></svg>
+        </button>
+        <button class="icon-button" id="resetBtn" type="button" title="重置本地记录" aria-label="重置本地记录">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div id="loadingState" class="loading-state">
+      <div>
+        <div class="spinner" aria-hidden="true"></div>
+        <h2>题库加载中</h2>
+        <p>题库会直接从 CDN 读取，并自动跳过前置非首题内容。</p>
+      </div>
+    </div>
+
+    <div id="appLayout" class="layout hidden">
+      <main id="mainContent">
+        <section id="emptyState" class="empty-state hidden">
+          <div>
+            <h2>当前筛选没有题目</h2>
+            <p>调整章节、难度、图片或关键词后继续刷题。</p>
+          </div>
+        </section>
+
+        <section id="questionPanel" class="question-panel" aria-live="polite">
+          <div class="progress-line" aria-hidden="true"><span id="progressLine"></span></div>
+          <div class="question-body">
+            <div class="meta-row" id="metaRow"></div>
+            <h2 class="question-title" id="questionTitle" tabindex="-1"></h2>
+            <div id="imageGrid" class="image-grid"></div>
+            <div id="options" class="options"></div>
+
+            <div class="answer-tools">
+              <div id="answerResult" class="answer-result">选择一个答案</div>
+              <div class="control-row">
+                <button class="icon-button" id="bookmarkBtn" type="button" title="收藏" aria-label="收藏">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                </button>
+                <button class="text-button" id="explainBtn" type="button">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                  解析
+                </button>
+              </div>
+            </div>
+
+            <article id="explanation" class="explanation">
+              <h2>题目解析</h2>
+              <div id="explanationText"></div>
+            </article>
+
+            <div class="nav-row">
+              <button class="pager-button" id="prevBtn" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                上一题
+              </button>
+              <div class="control-row">
+                <button class="pager-button" id="skipBtn" type="button">跳过</button>
+                <button class="pager-button primary" id="nextBtn" type="button">
+                  下一题
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <aside class="side-stack">
+        <section class="side-panel">
+          <div class="side-heading">
+            <h2>学习进度</h2>
+            <span class="chip good" id="progressPercent">0%</span>
+          </div>
+          <div class="study-progress" aria-hidden="true"><span id="studyProgressBar"></span></div>
+          <div class="progress-grid" aria-label="学习进度统计">
+            <div class="progress-metric"><strong id="progressDone">0</strong><span>已学</span></div>
+            <div class="progress-metric"><strong id="progressRemaining">0</strong><span>未学</span></div>
+            <div class="progress-metric"><strong id="progressBookmarked">0</strong><span>收藏</span></div>
+          </div>
+          <div class="progress-actions">
+            <button class="text-button primary" id="resumeBtn" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5L20 7"/></svg>
+              继续未学
+            </button>
+            <button class="text-button" id="wrongPracticeBtn" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+              重练错题
+            </button>
+          </div>
+        </section>
+
+        <section class="filter-panel">
+          <div class="side-heading">
+            <h2>筛选</h2>
+            <button class="chip-button" id="clearFiltersBtn" type="button">清空</button>
+          </div>
+
+          <div class="mode-tabs" role="tablist" aria-label="刷题模式">
+            <button class="seg-button is-active" type="button" data-mode="all">全部</button>
+            <button class="seg-button" type="button" data-mode="unanswered">未学</button>
+            <button class="seg-button" type="button" data-mode="random">随机</button>
+            <button class="seg-button" type="button" data-mode="wrong">错题</button>
+            <button class="seg-button" type="button" data-mode="bookmarked">收藏</button>
+          </div>
+
+          <div class="field">
+            <label for="tagFilter">章节</label>
+            <select class="select" id="tagFilter"></select>
+          </div>
+
+          <div class="field">
+            <label for="difficultyFilter">难度</label>
+            <select class="select" id="difficultyFilter">
+              <option value="">全部难度</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="imageFilter">图片</label>
+            <select class="select" id="imageFilter">
+              <option value="">全部题目</option>
+              <option value="with">只看图片题</option>
+              <option value="without">只看无图题</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="searchInput">关键词</label>
+            <div class="search-wrap">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.3-4.3"/><circle cx="11" cy="11" r="8"/></svg>
+              <input id="searchInput" class="search-input" type="search" placeholder="题干 / 选项 / 解析" autocomplete="off">
+            </div>
+          </div>
+
+          <label class="toggle-line" for="studyModeToggle">
+            <span>背题模式</span>
+            <span class="switch">
+              <input id="studyModeToggle" type="checkbox">
+              <span aria-hidden="true"></span>
+            </span>
+          </label>
+
+          <div class="field">
+            <label for="studyRevealMode">背题答案</label>
+            <select class="select" id="studyRevealMode">
+              <option value="instant">默认显示答案和解析</option>
+              <option value="manual">点击或下一题后显示</option>
+            </select>
+          </div>
+
+          <label class="toggle-line" for="autoNextToggle">
+            <span>答对自动下一题</span>
+            <span class="switch">
+              <input id="autoNextToggle" type="checkbox" checked>
+              <span aria-hidden="true"></span>
+            </span>
+          </label>
+        </section>
+
+        <section class="side-panel">
+          <div class="side-heading">
+            <h2>本轮题号</h2>
+            <span class="chip" id="mapCount">0 题</span>
+          </div>
+          <div class="map-jump">
+            <input id="jumpInput" type="number" min="1" inputmode="numeric" placeholder="跳到题号" aria-label="跳到本轮题号">
+            <button class="text-button" id="jumpBtn" type="button">跳转</button>
+          </div>
+          <div class="question-map" id="questionMap" aria-label="题号导航"></div>
+          <p class="mini-note" id="roundNote">答题记录会保存在当前浏览器。</p>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <button class="focus-control focus-prev" id="focusPrevBtn" type="button" aria-label="上一题">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+  </button>
+  <button class="focus-control focus-next" id="focusNextBtn" type="button" aria-label="下一题">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+  </button>
+  <button class="focus-control focus-exit" id="focusExitBtn" type="button" aria-label="退出专注模式">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+  </button>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const DATA_URL = "https://cdn.dfssclub.cn/TrainingTreasury/subject/202602091021293203653subject1.json";
+      const START_QUESTION_ID = "10917";
+      const START_QUESTION_TITLE = "驾驶校车、中型以上载客载货汽车、危险物品运输车辆以外的机动车在高速公路、城市快速路以外的道路上行驶超过规定时速百分之五十以上的，一次记9分。";
+      const STORE_KEY = "dfss.subject1.quick.v3";
+      const UNTAGGED_VALUE = "__untagged__";
+      const UNTAGGED_LABEL = "未分类";
+      const OPTION_KEYS = ["A", "B", "C", "D", "E", "F"];
+
+      const state = {
+        allQuestions: [],
+        questions: [],
+        currentIndex: 0,
+        mode: "all",
+        filters: {
+          tag: "",
+          difficulty: "",
+          image: "",
+          search: ""
+        },
+        answers: {},
+        bookmarks: {},
+        studied: {},
+        lastQuestionId: "",
+        studyMode: false,
+        studyRevealMode: "instant",
+        focusMode: false,
+        autoNext: true,
+        session: {
+          total: 0,
+          correct: 0,
+          streak: 0
+        },
+        answeredCurrent: false,
+        answerRevealed: false,
+        showExplanation: false,
+        nextTimer: 0
+      };
+
+      const el = {
+        loadingState: document.getElementById("loadingState"),
+        appLayout: document.getElementById("appLayout"),
+        emptyState: document.getElementById("emptyState"),
+        questionPanel: document.getElementById("questionPanel"),
+        sourceStatus: document.getElementById("sourceStatus"),
+        statPosition: document.getElementById("statPosition"),
+        statAccuracy: document.getElementById("statAccuracy"),
+        statStreak: document.getElementById("statStreak"),
+        statWrong: document.getElementById("statWrong"),
+        progressPercent: document.getElementById("progressPercent"),
+        progressDone: document.getElementById("progressDone"),
+        progressRemaining: document.getElementById("progressRemaining"),
+        progressBookmarked: document.getElementById("progressBookmarked"),
+        studyProgressBar: document.getElementById("studyProgressBar"),
+        progressLine: document.getElementById("progressLine"),
+        metaRow: document.getElementById("metaRow"),
+        questionTitle: document.getElementById("questionTitle"),
+        imageGrid: document.getElementById("imageGrid"),
+        options: document.getElementById("options"),
+        answerResult: document.getElementById("answerResult"),
+        explanation: document.getElementById("explanation"),
+        explanationText: document.getElementById("explanationText"),
+        explainBtn: document.getElementById("explainBtn"),
+        bookmarkBtn: document.getElementById("bookmarkBtn"),
+        prevBtn: document.getElementById("prevBtn"),
+        skipBtn: document.getElementById("skipBtn"),
+        nextBtn: document.getElementById("nextBtn"),
+        focusBtn: document.getElementById("focusBtn"),
+        focusPrevBtn: document.getElementById("focusPrevBtn"),
+        focusNextBtn: document.getElementById("focusNextBtn"),
+        focusExitBtn: document.getElementById("focusExitBtn"),
+        shuffleBtn: document.getElementById("shuffleBtn"),
+        resetBtn: document.getElementById("resetBtn"),
+        resumeBtn: document.getElementById("resumeBtn"),
+        wrongPracticeBtn: document.getElementById("wrongPracticeBtn"),
+        clearFiltersBtn: document.getElementById("clearFiltersBtn"),
+        tagFilter: document.getElementById("tagFilter"),
+        difficultyFilter: document.getElementById("difficultyFilter"),
+        imageFilter: document.getElementById("imageFilter"),
+        searchInput: document.getElementById("searchInput"),
+        studyModeToggle: document.getElementById("studyModeToggle"),
+        studyRevealMode: document.getElementById("studyRevealMode"),
+        autoNextToggle: document.getElementById("autoNextToggle"),
+        questionMap: document.getElementById("questionMap"),
+        jumpInput: document.getElementById("jumpInput"),
+        jumpBtn: document.getElementById("jumpBtn"),
+        mapCount: document.getElementById("mapCount"),
+        roundNote: document.getElementById("roundNote"),
+        toast: document.getElementById("toast")
+      };
+
+      const icon = {
+        check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>',
+        x: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>'
+      };
+
+      function safeJson(value, fallback) {
+        if (Array.isArray(value) || value && typeof value === "object") return value;
+        if (!value || value === "None") return fallback;
+        try {
+          return JSON.parse(value);
+        } catch {
+          return fallback;
+        }
+      }
+
+      function escapeText(value) {
+        return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#039;"
+        })[char]);
+      }
+
+      function normalizeQuestion(raw, order) {
+        const options = safeJson(raw.options, []).map((option, index) => ({
+          label: String(option.label || OPTION_KEYS[index] || index + 1),
+          value: String(option.value || "")
+        }));
+        const images = safeJson(raw.titleImgs, [])
+          .map((item) => typeof item === "string" ? item : item && item.url)
+          .filter(Boolean);
+        const answerMask = String(raw.correctAnswer || "").trim();
+        const answerIndexes = answerMask
+          .split("")
+          .map((bit, index) => bit === "1" ? index : -1)
+          .filter((index) => index >= 0);
+        const tags = (raw.tagList || []).map((tag) => {
+          if (typeof tag === "string") return tag;
+          return tag.tagName || tag.name || tag.title || "";
+        }).filter(Boolean);
+
+        return {
+          id: String(raw.questionId || order + 1),
+          order,
+          title: String(raw.title || ""),
+          options,
+          answerMask,
+          answerIndexes,
+          correctLabels: answerIndexes.map((index) => options[index]?.label || OPTION_KEYS[index]).filter(Boolean),
+          difficulty: String(raw.difficultyLevelTxt || "未知"),
+          difficultyCode: String(raw.difficultyLevel ?? ""),
+          type: String(raw.questionTypeTxt || "单选题"),
+          explanation: String(raw.explanation || "暂无解析"),
+          images,
+          tags,
+          searchBlob: [
+            raw.title,
+            raw.explanation,
+            raw.difficultyLevelTxt,
+            raw.questionTypeTxt,
+            ...tags,
+            ...options.map((option) => `${option.label}${option.value}`)
+          ].join(" ").toLowerCase()
+        };
+      }
+
+      function getEffectiveItems(rawItems) {
+        const startIndex = rawItems.findIndex((item) => (
+          String(item.questionId || "") === START_QUESTION_ID ||
+          String(item.title || "").trim() === START_QUESTION_TITLE
+        ));
+        return startIndex >= 0 ? rawItems.slice(startIndex) : rawItems;
+      }
+
+      function loadStore() {
+        try {
+          const stored = JSON.parse(localStorage.getItem(STORE_KEY) || "{}");
+          state.answers = stored.answers || {};
+          state.bookmarks = stored.bookmarks || {};
+          state.studied = stored.studied || {};
+          state.studyMode = stored.studyMode === true;
+          state.studyRevealMode = stored.studyRevealMode === "manual" ? "manual" : "instant";
+          state.autoNext = stored.autoNext !== false;
+          state.mode = stored.mode || "all";
+          state.filters = { ...state.filters, ...(stored.filters || {}) };
+          state.currentIndex = Number(stored.currentIndex || 0);
+          state.lastQuestionId = String(stored.lastQuestionId || "");
+        } catch {
+          state.answers = {};
+          state.bookmarks = {};
+          state.studied = {};
+        }
+      }
+
+      function saveStore() {
+        const payload = {
+          answers: state.answers,
+          bookmarks: state.bookmarks,
+          studied: state.studied,
+          lastQuestionId: currentQuestion()?.id || state.lastQuestionId,
+          studyMode: state.studyMode,
+          studyRevealMode: state.studyRevealMode,
+          autoNext: state.autoNext,
+          mode: state.mode,
+          filters: state.filters,
+          currentIndex: state.currentIndex
+        };
+        localStorage.setItem(STORE_KEY, JSON.stringify(payload));
+      }
+
+      function setText(element, text) {
+        element.textContent = text;
+      }
+
+      function syncBodyMode() {
+        document.body.classList.toggle("focus-mode", state.focusMode);
+        document.body.classList.toggle("study-active", state.studyMode);
+        el.focusBtn.classList.toggle("is-active", state.focusMode);
+        el.focusBtn.setAttribute("aria-pressed", String(state.focusMode));
+      }
+
+      async function setFocusMode(enabled) {
+        state.focusMode = enabled;
+        syncBodyMode();
+        renderQuestion();
+        renderStats();
+        renderMap();
+        if (enabled) {
+          if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+            try {
+              await document.documentElement.requestFullscreen();
+            } catch {
+              // Browser fullscreen can be unavailable; the focused layout still works.
+            }
+          }
+        } else if (document.fullscreenElement && document.exitFullscreen) {
+          try {
+            await document.exitFullscreen();
+          } catch {
+            // Leaving CSS focus mode is still enough if the browser rejects fullscreen exit.
+          }
+        }
+        fitFocusQuestion();
+      }
+
+      function fitFocusQuestion() {
+        document.body.classList.remove("focus-tight", "focus-ultra");
+        const body = document.querySelector(".question-body");
+        body?.style.removeProperty("--focus-scale");
+        if (!state.focusMode) return;
+        const panel = el.questionPanel;
+        requestAnimationFrame(() => {
+          if (!body || panel.scrollHeight <= panel.clientHeight + 1) return;
+          let scale = 1;
+          for (let attempt = 0; attempt < 4 && panel.scrollHeight > panel.clientHeight + 1; attempt += 1) {
+            scale = Math.max(.48, scale * (panel.clientHeight / panel.scrollHeight) * .94);
+            body.style.setProperty("--focus-scale", scale.toFixed(3));
+          }
+        });
+      }
+
+      function questionStatus(question) {
+        const saved = state.answers[question.id];
+        if (!saved) return "new";
+        return saved.correct ? "correct" : "wrong";
+      }
+
+      function isBookmarked(question) {
+        return Boolean(state.bookmarks[question.id]);
+      }
+
+      function isStudied(question) {
+        return Boolean(state.studied[question.id]);
+      }
+
+      function isLearned(question) {
+        return Boolean(state.answers[question.id] || state.studied[question.id]);
+      }
+
+      function shouldRevealStudyAnswer() {
+        return state.studyMode && (state.studyRevealMode === "instant" || state.answerRevealed);
+      }
+
+      function recordStudyView(question) {
+        if (!state.studyMode || !question || state.studied[question.id]) return false;
+        state.studied[question.id] = {
+          firstSeenAt: Date.now()
+        };
+        saveStore();
+        return true;
+      }
+
+      function revealStudyAnswer() {
+        const question = currentQuestion();
+        if (!question || !state.studyMode || shouldRevealStudyAnswer()) return false;
+        state.answerRevealed = true;
+        recordStudyView(question);
+        saveStore();
+        renderQuestion();
+        renderStats();
+        renderMap();
+        return true;
+      }
+
+      function getProgressStats() {
+        const total = state.allQuestions.length;
+        let done = 0;
+        let mastered = 0;
+        let correct = 0;
+        let wrong = 0;
+        let bookmarked = 0;
+
+        state.allQuestions.forEach((question) => {
+          const saved = state.answers[question.id];
+          const studied = isStudied(question);
+          if (saved) {
+            done += 1;
+            if (saved.correct) {
+              correct += 1;
+              mastered += 1;
+            }
+            else wrong += 1;
+          } else if (studied) {
+            done += 1;
+            mastered += 1;
+          }
+          if (isBookmarked(question)) bookmarked += 1;
+        });
+
+        return {
+          total,
+          done,
+          correct,
+          wrong,
+          bookmarked,
+          remaining: Math.max(0, total - done),
+          percent: total ? Math.round(done / total * 100) : 0,
+          accuracy: done ? Math.round(mastered / done * 100) : 0
+        };
+      }
+
+      function buildFilterOptions() {
+        const tags = new Map();
+        const difficulties = new Map();
+        let untaggedCount = 0;
+        state.allQuestions.forEach((question) => {
+          if (question.tags.length) {
+            question.tags.forEach((tag) => tags.set(tag, (tags.get(tag) || 0) + 1));
+          } else {
+            untaggedCount += 1;
+          }
+          difficulties.set(question.difficulty, (difficulties.get(question.difficulty) || 0) + 1);
+        });
+
+        const untaggedOption = untaggedCount
+          ? `<option value="${UNTAGGED_VALUE}">${UNTAGGED_LABEL}（${untaggedCount}）</option>`
+          : "";
+        el.tagFilter.innerHTML = '<option value="">全部章节</option>' + untaggedOption + [...tags.entries()]
+          .sort((a, b) => a[0].localeCompare(b[0], "zh-Hans-CN"))
+          .map(([tag, count]) => `<option value="${escapeText(tag)}">${escapeText(tag)}（${count}）</option>`)
+          .join("");
+
+        el.difficultyFilter.innerHTML = '<option value="">全部难度</option>' + [...difficulties.entries()]
+          .sort((a, b) => {
+            const order = { "简单": 0, "一般": 1, "困难": 2 };
+            return (order[a[0]] ?? 9) - (order[b[0]] ?? 9);
+          })
+          .map(([difficulty, count]) => `<option value="${escapeText(difficulty)}">${escapeText(difficulty)}（${count}）</option>`)
+          .join("");
+      }
+
+      function syncControls() {
+        document.querySelectorAll("[data-mode]").forEach((button) => {
+          button.classList.toggle("is-active", button.dataset.mode === state.mode);
+        });
+        el.tagFilter.value = state.filters.tag;
+        el.difficultyFilter.value = state.filters.difficulty;
+        el.imageFilter.value = state.filters.image;
+        el.searchInput.value = state.filters.search;
+        el.studyModeToggle.checked = state.studyMode;
+        el.studyRevealMode.value = state.studyRevealMode;
+        el.autoNextToggle.checked = state.autoNext;
+        syncBodyMode();
+      }
+
+      function applyFilters(keepQuestionId) {
+        const search = state.filters.search.trim().toLowerCase();
+        let nextQuestions = state.allQuestions.filter((question) => {
+          if (state.filters.tag === UNTAGGED_VALUE && question.tags.length) return false;
+          if (state.filters.tag && state.filters.tag !== UNTAGGED_VALUE && !question.tags.includes(state.filters.tag)) return false;
+          if (state.filters.difficulty && question.difficulty !== state.filters.difficulty) return false;
+          if (state.filters.image === "with" && !question.images.length) return false;
+          if (state.filters.image === "without" && question.images.length) return false;
+          if (search && !question.searchBlob.includes(search)) return false;
+          if (state.mode === "unanswered" && isLearned(question)) return false;
+          if (state.mode === "wrong" && questionStatus(question) !== "wrong") return false;
+          if (state.mode === "bookmarked" && !isBookmarked(question)) return false;
+          return true;
+        });
+
+        if (state.mode === "random") {
+          nextQuestions = shuffled(nextQuestions);
+        }
+
+        state.questions = nextQuestions;
+        const targetQuestionId = keepQuestionId || state.lastQuestionId;
+        const foundIndex = targetQuestionId ? state.questions.findIndex((question) => question.id === targetQuestionId) : -1;
+        state.currentIndex = foundIndex >= 0 ? foundIndex : Math.min(state.currentIndex, Math.max(0, state.questions.length - 1));
+        state.lastQuestionId = state.questions[state.currentIndex]?.id || state.lastQuestionId;
+        state.answeredCurrent = false;
+        state.answerRevealed = false;
+        state.showExplanation = false;
+        saveStore();
+        render();
+      }
+
+      function shuffled(list) {
+        const next = [...list];
+        for (let index = next.length - 1; index > 0; index -= 1) {
+          const swapIndex = Math.floor(Math.random() * (index + 1));
+          [next[index], next[swapIndex]] = [next[swapIndex], next[index]];
+        }
+        return next;
+      }
+
+      function currentQuestion() {
+        return state.questions[state.currentIndex] || null;
+      }
+
+      function answerQuestion(index) {
+        const question = currentQuestion();
+        if (!question || state.answeredCurrent || state.studyMode) return;
+        clearTimeout(state.nextTimer);
+
+        const correct = question.answerIndexes.includes(index);
+        state.answeredCurrent = true;
+        state.showExplanation = true;
+        state.lastQuestionId = question.id;
+        state.session.total += 1;
+        state.session.correct += correct ? 1 : 0;
+        state.session.streak = correct ? state.session.streak + 1 : 0;
+
+        const previous = state.answers[question.id] || { attempts: 0, wrongCount: 0 };
+        state.answers[question.id] = {
+          selectedIndex: index,
+          correct,
+          attempts: previous.attempts + 1,
+          wrongCount: previous.wrongCount + (correct ? 0 : 1),
+          updatedAt: Date.now()
+        };
+
+        saveStore();
+        renderQuestion();
+        renderStats();
+        renderMap();
+
+        if (correct && state.autoNext && state.currentIndex < state.questions.length - 1) {
+          state.nextTimer = setTimeout(() => goTo(state.currentIndex + 1), 650);
+        }
+      }
+
+      function goTo(index) {
+        if (!state.questions.length) return;
+        clearTimeout(state.nextTimer);
+        state.currentIndex = Math.max(0, Math.min(index, state.questions.length - 1));
+        state.lastQuestionId = state.questions[state.currentIndex]?.id || state.lastQuestionId;
+        state.answeredCurrent = false;
+        state.answerRevealed = false;
+        state.showExplanation = false;
+        saveStore();
+        renderQuestion();
+        renderStats();
+        renderMap();
+      }
+
+      function nextQuestion() {
+        if (state.studyMode && state.studyRevealMode === "manual" && !shouldRevealStudyAnswer()) {
+          revealStudyAnswer();
+          return;
+        }
+        if (state.currentIndex < state.questions.length - 1) goTo(state.currentIndex + 1);
+      }
+
+      function prevQuestion() {
+        if (state.currentIndex > 0) goTo(state.currentIndex - 1);
+      }
+
+      function render() {
+        el.loadingState.classList.add("hidden");
+        el.appLayout.classList.remove("hidden");
+        el.emptyState.classList.toggle("hidden", state.questions.length > 0);
+        el.questionPanel.classList.toggle("hidden", !state.questions.length);
+        renderQuestion();
+        renderStats();
+        renderMap();
+      }
+
+      function renderStats() {
+        const total = state.questions.length;
+        const progress = getProgressStats();
+        const doneInRound = state.questions.filter(isLearned).length;
+        setText(el.statPosition, total ? `${state.currentIndex + 1}/${total}` : "0/0");
+        setText(el.statAccuracy, `${progress.accuracy}%`);
+        setText(el.statStreak, state.session.streak);
+        setText(el.statWrong, progress.wrong);
+        setText(el.progressPercent, `${progress.percent}%`);
+        setText(el.progressDone, progress.done);
+        setText(el.progressRemaining, progress.remaining);
+        setText(el.progressBookmarked, progress.bookmarked);
+        setText(el.mapCount, `${total} 题`);
+        setText(el.roundNote, `本轮已学 ${doneInRound} 题，可滚动或输入题号跳转。`);
+        el.jumpInput.max = String(total || 1);
+        el.jumpInput.placeholder = total ? `1-${total}` : "跳到题号";
+        el.jumpBtn.disabled = total === 0;
+        el.studyProgressBar.style.width = `${progress.percent}%`;
+        el.progressLine.style.width = total ? `${(state.currentIndex + 1) / total * 100}%` : "0%";
+        el.resumeBtn.disabled = progress.remaining === 0;
+        el.wrongPracticeBtn.disabled = progress.wrong === 0;
+      }
+
+      function renderQuestion() {
+        const question = currentQuestion();
+        if (!question) return;
+        const revealStudy = shouldRevealStudyAnswer();
+        if (revealStudy) recordStudyView(question);
+        const saved = state.answers[question.id];
+        const studied = isStudied(question);
+        const revealAnswer = state.answeredCurrent || revealStudy;
+        const selectedIndex = state.answeredCurrent ? saved?.selectedIndex : null;
+        const tags = question.tags.length ? question.tags : [UNTAGGED_LABEL];
+        const status = questionStatus(question);
+
+        el.metaRow.innerHTML = [
+          `<span class="chip">第 ${question.order + 1} 题</span>`,
+          `<span class="chip">${escapeText(question.type)}</span>`,
+          `<span class="chip ${question.difficulty === "困难" ? "warn" : ""}">${escapeText(question.difficulty)}</span>`,
+          ...tags.slice(0, 2).map((tag) => `<span class="chip">${escapeText(tag)}</span>`),
+          question.images.length ? '<span class="chip">图片题</span>' : "",
+          state.studyMode ? '<span class="chip good">背题模式</span>' : "",
+          status === "wrong" ? '<span class="chip bad">错题</span>' : "",
+          status === "correct" ? '<span class="chip good">已掌握</span>' : "",
+          !saved && studied ? '<span class="chip good">已背</span>' : ""
+        ].join("");
+
+        setText(el.questionTitle, question.title);
+        el.imageGrid.innerHTML = question.images.map((url, index) => (
+          `<img src="${escapeText(url)}" alt="题目配图 ${index + 1}" loading="lazy">`
+        )).join("");
+
+        el.options.innerHTML = question.options.map((option, index) => {
+          const isCorrect = question.answerIndexes.includes(index);
+          const isSelected = selectedIndex === index;
+          const classes = ["option-button"];
+          if (revealAnswer && isCorrect) classes.push("is-correct");
+          if (state.answeredCurrent && isSelected && !isCorrect) classes.push("is-wrong");
+          if (state.studyMode && revealStudy && !state.answeredCurrent) classes.push("is-readonly");
+          if (!state.studyMode && !revealAnswer && saved?.selectedIndex === index) classes.push("is-selected");
+          const readonlyAttrs = state.studyMode && revealStudy && !state.answeredCurrent ? 'aria-disabled="true" tabindex="-1"' : "";
+          return `
+            <button class="${classes.join(" ")}" type="button" data-answer="${index}" ${readonlyAttrs} ${state.answeredCurrent ? "disabled" : ""}>
+              <span class="label">${escapeText(option.label)}</span>
+              <span class="value">${escapeText(option.value)}</span>
+            </button>
+          `;
+        }).join("");
+
+        el.options.querySelectorAll("[data-answer]").forEach((button) => {
+          if (state.studyMode) {
+            button.addEventListener("click", revealStudyAnswer);
+          } else {
+            button.addEventListener("click", () => answerQuestion(Number(button.dataset.answer)));
+          }
+        });
+
+        if (state.answeredCurrent && saved) {
+          const selectedLabel = question.options[saved.selectedIndex]?.label || "";
+          el.answerResult.innerHTML = saved.correct
+            ? `${icon.check}<strong>答对了</strong><span>答案 ${escapeText(question.correctLabels.join("、"))}</span>`
+            : `${icon.x}<strong>答错了</strong><span>你选 ${escapeText(selectedLabel)}，答案 ${escapeText(question.correctLabels.join("、"))}</span>`;
+        } else if (state.studyMode) {
+          if (revealStudy) {
+            el.answerResult.innerHTML = `${icon.check}<strong>背题模式</strong><span>答案 ${escapeText(question.correctLabels.join("、"))}</span>`;
+          } else {
+            el.answerResult.textContent = "点一下题目或下一题显示答案";
+          }
+        } else if (saved) {
+          el.answerResult.innerHTML = saved.correct
+            ? `${icon.check}<strong>上次答对</strong><span>答案 ${escapeText(question.correctLabels.join("、"))}</span>`
+            : `${icon.x}<strong>上次答错</strong><span>答案 ${escapeText(question.correctLabels.join("、"))}</span>`;
+        } else {
+          el.answerResult.textContent = "选择一个答案";
+        }
+
+        el.explanation.classList.toggle("is-visible", state.showExplanation || revealStudy);
+        el.explanationText.textContent = question.explanation;
+        el.explainBtn.classList.toggle("is-active", state.showExplanation || revealStudy);
+        el.bookmarkBtn.classList.toggle("is-active", isBookmarked(question));
+        el.bookmarkBtn.setAttribute("aria-pressed", String(isBookmarked(question)));
+        const canRevealStudy = state.studyMode && state.studyRevealMode === "manual" && !revealStudy;
+        const nextIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>';
+        const nextActionLabel = canRevealStudy ? "显示答案" : "下一题";
+        el.skipBtn.textContent = canRevealStudy ? "看答案" : "跳过";
+        el.nextBtn.innerHTML = canRevealStudy ? `看答案${nextIcon}` : `下一题${nextIcon}`;
+        el.focusNextBtn.title = nextActionLabel;
+        el.focusNextBtn.setAttribute("aria-label", nextActionLabel);
+        el.prevBtn.disabled = state.currentIndex <= 0;
+        el.nextBtn.disabled = !canRevealStudy && state.currentIndex >= state.questions.length - 1;
+        el.skipBtn.disabled = !canRevealStudy && state.currentIndex >= state.questions.length - 1;
+        el.focusPrevBtn.disabled = state.currentIndex <= 0;
+        el.focusNextBtn.disabled = !canRevealStudy && state.currentIndex >= state.questions.length - 1;
+        fitFocusQuestion();
+      }
+
+      function renderMap() {
+        const total = state.questions.length;
+        const buttons = [];
+        for (let index = 0; index < total; index += 1) {
+          const question = state.questions[index];
+          const classes = ["map-button"];
+          const status = questionStatus(question);
+          if (index === state.currentIndex) classes.push("is-current");
+          if (status === "correct") classes.push("is-correct");
+          if (status === "wrong") classes.push("is-wrong");
+          if (status === "new" && isStudied(question)) classes.push("is-studied");
+          if (isBookmarked(question)) classes.push("is-bookmarked");
+          buttons.push(`<button class="${classes.join(" ")}" type="button" data-go="${index}">${index + 1}</button>`);
+        }
+
+        el.questionMap.innerHTML = buttons.join("");
+        el.questionMap.querySelectorAll("[data-go]").forEach((button) => {
+          button.addEventListener("click", () => goTo(Number(button.dataset.go)));
+        });
+        requestAnimationFrame(() => {
+          el.questionMap.querySelector(".map-button.is-current")?.scrollIntoView({ block: "nearest", inline: "nearest" });
+        });
+      }
+
+      function jumpToInputQuestion() {
+        const total = state.questions.length;
+        const value = Number.parseInt(el.jumpInput.value, 10);
+        if (!Number.isFinite(value)) {
+          showToast("请输入题号");
+          return;
+        }
+        const target = Math.max(1, Math.min(total, value));
+        el.jumpInput.value = "";
+        goTo(target - 1);
+      }
+
+      function setMode(mode) {
+        const keepId = currentQuestion()?.id;
+        state.mode = mode;
+        if (mode === "random") state.currentIndex = 0;
+        syncControls();
+        applyFilters(keepId);
+      }
+
+      function startMode(mode, emptyMessage) {
+        state.mode = mode;
+        state.currentIndex = 0;
+        syncControls();
+        applyFilters();
+        if (!state.questions.length) showToast(emptyMessage);
+      }
+
+      function continueUnanswered() {
+        startMode("unanswered", "当前筛选没有未学题");
+      }
+
+      function practiceWrongQuestions() {
+        startMode("wrong", "当前筛选没有错题");
+      }
+
+      function toggleBookmark() {
+        const question = currentQuestion();
+        if (!question) return;
+        if (state.bookmarks[question.id]) {
+          delete state.bookmarks[question.id];
+          showToast("已取消收藏");
+        } else {
+          state.bookmarks[question.id] = Date.now();
+          showToast("已收藏");
+        }
+        const keepId = question.id;
+        saveStore();
+        if (state.mode === "bookmarked") {
+          applyFilters(keepId);
+        } else {
+          renderQuestion();
+          renderMap();
+        }
+      }
+
+      function showToast(message) {
+        el.toast.textContent = message;
+        el.toast.classList.add("is-visible");
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => el.toast.classList.remove("is-visible"), 1700);
+      }
+
+      function resetLocalRecords() {
+        const confirmed = window.confirm("清除进度、错题、收藏和筛选记录？");
+        if (!confirmed) return;
+        localStorage.removeItem(STORE_KEY);
+        state.answers = {};
+        state.bookmarks = {};
+        state.studied = {};
+        state.lastQuestionId = "";
+        state.studyMode = false;
+        state.studyRevealMode = "instant";
+        state.mode = "all";
+        state.filters = { tag: "", difficulty: "", image: "", search: "" };
+        state.currentIndex = 0;
+        state.session = { total: 0, correct: 0, streak: 0 };
+        state.answerRevealed = false;
+        syncControls();
+        applyFilters();
+        showToast("本地记录已清除");
+      }
+
+      function clearFilters() {
+        const keepId = currentQuestion()?.id;
+        state.filters = { tag: "", difficulty: "", image: "", search: "" };
+        syncControls();
+        applyFilters(keepId);
+      }
+
+      function bindEvents() {
+        let resizeTimer = 0;
+        document.querySelectorAll("[data-mode]").forEach((button) => {
+          button.addEventListener("click", () => setMode(button.dataset.mode));
+        });
+        el.tagFilter.addEventListener("change", () => {
+          state.filters.tag = el.tagFilter.value;
+          state.currentIndex = 0;
+          applyFilters();
+        });
+        el.difficultyFilter.addEventListener("change", () => {
+          state.filters.difficulty = el.difficultyFilter.value;
+          state.currentIndex = 0;
+          applyFilters();
+        });
+        el.imageFilter.addEventListener("change", () => {
+          state.filters.image = el.imageFilter.value;
+          state.currentIndex = 0;
+          applyFilters();
+        });
+        el.searchInput.addEventListener("input", () => {
+          state.filters.search = el.searchInput.value;
+          state.currentIndex = 0;
+          applyFilters();
+        });
+        el.studyModeToggle.addEventListener("change", () => {
+          state.studyMode = el.studyModeToggle.checked;
+          state.answerRevealed = false;
+          state.showExplanation = false;
+          saveStore();
+          renderQuestion();
+          renderStats();
+          renderMap();
+        });
+        el.studyRevealMode.addEventListener("change", () => {
+          state.studyRevealMode = el.studyRevealMode.value === "manual" ? "manual" : "instant";
+          state.answerRevealed = false;
+          state.showExplanation = false;
+          saveStore();
+          renderQuestion();
+          renderStats();
+          renderMap();
+        });
+        el.autoNextToggle.addEventListener("change", () => {
+          state.autoNext = el.autoNextToggle.checked;
+          saveStore();
+        });
+        el.focusBtn.addEventListener("click", () => setFocusMode(!state.focusMode));
+        el.focusPrevBtn.addEventListener("click", prevQuestion);
+        el.focusNextBtn.addEventListener("click", nextQuestion);
+        el.focusExitBtn.addEventListener("click", () => setFocusMode(false));
+        el.prevBtn.addEventListener("click", prevQuestion);
+        el.skipBtn.addEventListener("click", nextQuestion);
+        el.nextBtn.addEventListener("click", nextQuestion);
+        el.explainBtn.addEventListener("click", () => {
+          if (state.studyMode && state.studyRevealMode === "manual" && !shouldRevealStudyAnswer()) {
+            revealStudyAnswer();
+            return;
+          }
+          state.showExplanation = !state.showExplanation;
+          renderQuestion();
+        });
+        el.bookmarkBtn.addEventListener("click", toggleBookmark);
+        el.shuffleBtn.addEventListener("click", () => {
+          state.mode = "random";
+          state.currentIndex = 0;
+          syncControls();
+          applyFilters();
+          showToast("已随机重排");
+        });
+        el.resetBtn.addEventListener("click", resetLocalRecords);
+        el.resumeBtn.addEventListener("click", continueUnanswered);
+        el.wrongPracticeBtn.addEventListener("click", practiceWrongQuestions);
+        el.clearFiltersBtn.addEventListener("click", clearFilters);
+        el.jumpBtn.addEventListener("click", jumpToInputQuestion);
+        el.jumpInput.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            jumpToInputQuestion();
+          }
+        });
+        el.questionPanel.addEventListener("click", (event) => {
+          if (!state.studyMode || state.studyRevealMode !== "manual" || shouldRevealStudyAnswer()) return;
+          if (!(event.target instanceof Element)) return;
+          if (event.target.closest("button, a, input, select, textarea")) return;
+          revealStudyAnswer();
+        });
+        window.addEventListener("resize", () => {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(() => {
+            renderMap();
+            fitFocusQuestion();
+          }, 120);
+        });
+        document.addEventListener("fullscreenchange", () => {
+          if (!document.fullscreenElement && state.focusMode) {
+            state.focusMode = false;
+            syncBodyMode();
+            fitFocusQuestion();
+          }
+        });
+
+        window.addEventListener("keydown", (event) => {
+          const target = event.target;
+          const isTyping = target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement;
+          if (isTyping) return;
+          const key = event.key.toLowerCase();
+          const question = currentQuestion();
+          if (!question) return;
+          const labels = question.options.map((option) => option.label.toLowerCase());
+          const optionIndex = labels.indexOf(key) >= 0 ? labels.indexOf(key) : Number.parseInt(key, 10) - 1;
+          if (key === "escape" && state.focusMode) {
+            event.preventDefault();
+            setFocusMode(false);
+          } else if (key === "f") {
+            event.preventDefault();
+            setFocusMode(!state.focusMode);
+          } else if (optionIndex >= 0 && optionIndex < question.options.length) {
+            event.preventDefault();
+            if (state.studyMode) revealStudyAnswer();
+            else answerQuestion(optionIndex);
+          } else if (key === "arrowright" || key === " ") {
+            event.preventDefault();
+            nextQuestion();
+          } else if (key === "arrowleft") {
+            event.preventDefault();
+            prevQuestion();
+          } else if (key === "e") {
+            event.preventDefault();
+            if (state.studyMode && state.studyRevealMode === "manual" && !shouldRevealStudyAnswer()) {
+              revealStudyAnswer();
+              return;
+            }
+            state.showExplanation = !state.showExplanation;
+            renderQuestion();
+          } else if (key === "b") {
+            event.preventDefault();
+            toggleBookmark();
+          }
+        });
+      }
+
+      async function loadQuestions() {
+        loadStore();
+        syncControls();
+        bindEvents();
+        try {
+          const response = await fetch(DATA_URL, { cache: "force-cache" });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const payload = await response.json();
+          const rawItems = payload?.data?.items || [];
+          const effectiveItems = getEffectiveItems(rawItems);
+          state.allQuestions = effectiveItems.map(normalizeQuestion);
+          buildFilterOptions();
+          syncControls();
+          const skippedCount = rawItems.length - effectiveItems.length;
+          el.sourceStatus.textContent = `已加载 ${state.allQuestions.length} 题，已截取前置 ${skippedCount} 题，数据更新于 2026-02-09`;
+          applyFilters();
+        } catch (error) {
+          el.loadingState.innerHTML = `
+            <div>
+              <h2>题库加载失败</h2>
+              <p>请检查网络后刷新页面，或确认 CDN 地址仍可访问。</p>
+            </div>
+          `;
+          console.error(error);
+        }
+      }
+
+      loadQuestions();
+    })();
+  </script>
+</body>
+</html>
