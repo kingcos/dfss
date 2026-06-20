@@ -1696,6 +1696,16 @@
         return true;
       }
 
+      function handleFocusStudyTap() {
+        if (!state.focusMode || !state.studyMode) return false;
+        if (!shouldRevealStudyAnswer()) {
+          revealStudyAnswer();
+          return true;
+        }
+        nextQuestion();
+        return true;
+      }
+
       function getProgressStats() {
         const total = state.allQuestions.length;
         let done = 0;
@@ -1960,7 +1970,13 @@
 
         el.options.querySelectorAll("[data-answer]").forEach((button) => {
           if (state.studyMode) {
-            button.addEventListener("click", revealStudyAnswer);
+            button.addEventListener("click", (event) => {
+              if (handleFocusStudyTap()) {
+                event.stopPropagation();
+                return;
+              }
+              revealStudyAnswer();
+            });
           } else {
             button.addEventListener("click", () => answerQuestion(Number(button.dataset.answer)));
           }
@@ -2207,9 +2223,10 @@
           }
         });
         el.questionPanel.addEventListener("click", (event) => {
-          if (!state.studyMode || state.studyRevealMode !== "manual" || shouldRevealStudyAnswer()) return;
           if (!(event.target instanceof Element)) return;
           if (event.target.closest("button, a, input, select, textarea")) return;
+          if (handleFocusStudyTap()) return;
+          if (!state.studyMode || state.studyRevealMode !== "manual" || shouldRevealStudyAnswer()) return;
           revealStudyAnswer();
         });
         window.addEventListener("resize", () => {
