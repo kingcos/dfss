@@ -218,6 +218,7 @@
     }
 
     .icon-button.is-active,
+    .text-button.is-active,
     .chip-button.is-active {
       border-color: rgba(23, 107, 135, .36);
       background: var(--brand-soft);
@@ -488,6 +489,62 @@
       color: var(--muted);
     }
 
+    .ai-panel {
+      display: none;
+      margin-top: 16px;
+      border: 1px solid rgba(23, 107, 135, .22);
+      border-radius: var(--radius);
+      background: #f7fbfc;
+      padding: 15px;
+      color: #263443;
+      line-height: 1.68;
+    }
+
+    .ai-panel.is-visible {
+      display: block;
+    }
+
+    .ai-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .ai-panel-head h2 {
+      margin: 0;
+      color: var(--brand-dark);
+      font-size: 15px;
+    }
+
+    .ai-answer {
+      display: grid;
+      gap: 10px;
+      overflow-wrap: anywhere;
+    }
+
+    .ai-answer h3 {
+      margin: 4px 0 0;
+      color: #182635;
+      font-size: 16px;
+    }
+
+    .ai-answer p,
+    .ai-answer ul,
+    .ai-answer ol {
+      margin: 0;
+    }
+
+    .ai-answer ul,
+    .ai-answer ol {
+      padding-left: 22px;
+    }
+
+    .ai-answer.is-loading {
+      color: var(--muted);
+    }
+
     .nav-row {
       justify-content: space-between;
       margin-top: 18px;
@@ -554,6 +611,10 @@
     }
 
     body.focus-mode .explanation {
+      display: none !important;
+    }
+
+    body.focus-mode .ai-panel {
       display: none !important;
     }
 
@@ -752,6 +813,11 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
+    }
+
+    .ai-settings-actions {
+      grid-template-columns: 1fr;
+      margin-top: 8px;
     }
 
     .side-heading {
@@ -1257,12 +1323,26 @@
                   <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                   解析
                 </button>
+                <button class="text-button" id="aiExplainBtn" type="button">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9Z"/><path d="M5 4v4"/><path d="M3 6h4"/><path d="M19 16v4"/><path d="M17 18h4"/></svg>
+                  AI讲解
+                </button>
               </div>
             </div>
 
             <article id="explanation" class="explanation">
               <h2>题目解析</h2>
               <div id="explanationText"></div>
+            </article>
+
+            <article id="aiPanel" class="ai-panel" aria-live="polite" aria-busy="false">
+              <div class="ai-panel-head">
+                <h2>AI 讲解</h2>
+                <button class="icon-button" id="aiCloseBtn" type="button" title="收起 AI 讲解" aria-label="收起 AI 讲解">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+              </div>
+              <div id="aiAnswer" class="ai-answer"></div>
             </article>
 
             <div class="nav-row">
@@ -1372,6 +1452,31 @@
               <span aria-hidden="true"></span>
             </span>
           </label>
+
+          <div class="field">
+            <label for="deepseekKey">DeepSeek Key</label>
+            <input id="deepseekKey" class="select" type="password" placeholder="sk-...（仅本机）" autocomplete="off">
+          </div>
+
+          <div class="field">
+            <label for="aiModel">AI 模型</label>
+            <select class="select" id="aiModel">
+              <option value="deepseek-v4-pro">DeepSeek V4 Pro</option>
+              <option value="deepseek-v4-flash">DeepSeek V4 Flash</option>
+            </select>
+          </div>
+
+          <label class="toggle-line" for="aiThinkingToggle">
+            <span>AI 深度思考</span>
+            <span class="switch">
+              <input id="aiThinkingToggle" type="checkbox" checked>
+              <span aria-hidden="true"></span>
+            </span>
+          </label>
+
+          <div class="progress-actions ai-settings-actions">
+            <button class="text-button" id="clearAiKeyBtn" type="button">清除 Key</button>
+          </div>
         </section>
 
         <section class="side-panel">
@@ -1410,6 +1515,8 @@
       const START_QUESTION_ID = "10917";
       const START_QUESTION_TITLE = "驾驶校车、中型以上载客载货汽车、危险物品运输车辆以外的机动车在高速公路、城市快速路以外的道路上行驶超过规定时速百分之五十以上的，一次记9分。";
       const STORE_KEY = "dfss.subject1.quick.v3";
+      const AI_STORE_KEY = "dfss.subject1.deepseek.v1";
+      const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
       const UNTAGGED_VALUE = "__untagged__";
       const UNTAGGED_LABEL = "未分类";
       const OPTION_KEYS = ["A", "B", "C", "D", "E", "F"];
@@ -1441,6 +1548,14 @@
         answeredCurrent: false,
         answerRevealed: false,
         showExplanation: false,
+        aiPanelVisible: false,
+        aiLoading: false,
+        aiCache: {},
+        ai: {
+          apiKey: "",
+          model: "deepseek-v4-pro",
+          thinking: true
+        },
         nextTimer: 0
       };
 
@@ -1468,6 +1583,10 @@
         explanation: document.getElementById("explanation"),
         explanationText: document.getElementById("explanationText"),
         explainBtn: document.getElementById("explainBtn"),
+        aiExplainBtn: document.getElementById("aiExplainBtn"),
+        aiPanel: document.getElementById("aiPanel"),
+        aiAnswer: document.getElementById("aiAnswer"),
+        aiCloseBtn: document.getElementById("aiCloseBtn"),
         bookmarkBtn: document.getElementById("bookmarkBtn"),
         prevBtn: document.getElementById("prevBtn"),
         skipBtn: document.getElementById("skipBtn"),
@@ -1488,6 +1607,10 @@
         studyModeToggle: document.getElementById("studyModeToggle"),
         studyRevealMode: document.getElementById("studyRevealMode"),
         autoNextToggle: document.getElementById("autoNextToggle"),
+        deepseekKey: document.getElementById("deepseekKey"),
+        aiModel: document.getElementById("aiModel"),
+        aiThinkingToggle: document.getElementById("aiThinkingToggle"),
+        clearAiKeyBtn: document.getElementById("clearAiKeyBtn"),
         questionMap: document.getElementById("questionMap"),
         jumpInput: document.getElementById("jumpInput"),
         jumpBtn: document.getElementById("jumpBtn"),
@@ -1590,6 +1713,15 @@
           state.bookmarks = {};
           state.studied = {};
         }
+
+        try {
+          const storedAi = JSON.parse(localStorage.getItem(AI_STORE_KEY) || "{}");
+          state.ai.apiKey = String(storedAi.apiKey || "");
+          state.ai.model = ["deepseek-v4-pro", "deepseek-v4-flash"].includes(storedAi.model) ? storedAi.model : "deepseek-v4-pro";
+          state.ai.thinking = storedAi.thinking !== false;
+        } catch {
+          state.ai = { apiKey: "", model: "deepseek-v4-pro", thinking: true };
+        }
       }
 
       function saveStore() {
@@ -1606,6 +1738,14 @@
           currentIndex: state.currentIndex
         };
         localStorage.setItem(STORE_KEY, JSON.stringify(payload));
+      }
+
+      function saveAiSettings() {
+        localStorage.setItem(AI_STORE_KEY, JSON.stringify({
+          apiKey: state.ai.apiKey,
+          model: state.ai.model,
+          thinking: state.ai.thinking
+        }));
       }
 
       function setText(element, text) {
@@ -1801,6 +1941,9 @@
         el.studyModeToggle.checked = state.studyMode;
         el.studyRevealMode.value = state.studyRevealMode;
         el.autoNextToggle.checked = state.autoNext;
+        el.deepseekKey.value = state.ai.apiKey;
+        el.aiModel.value = state.ai.model;
+        el.aiThinkingToggle.checked = state.ai.thinking;
         syncBodyMode();
       }
 
@@ -1831,6 +1974,7 @@
         state.answeredCurrent = false;
         state.answerRevealed = false;
         state.showExplanation = false;
+        state.aiPanelVisible = false;
         saveStore();
         render();
       }
@@ -1888,6 +2032,7 @@
         state.answeredCurrent = false;
         state.answerRevealed = false;
         state.showExplanation = false;
+        state.aiPanelVisible = false;
         saveStore();
         renderQuestion();
         renderStats();
@@ -2035,7 +2180,165 @@
         el.skipBtn.disabled = !canRevealStudy && state.currentIndex >= state.questions.length - 1;
         el.focusPrevBtn.disabled = state.currentIndex <= 0;
         el.focusNextBtn.disabled = !canRevealStudy && state.currentIndex >= state.questions.length - 1;
+        renderAiPanel();
         fitFocusQuestion();
+      }
+
+      function formatAiInline(text) {
+        return escapeText(text).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+      }
+
+      function formatAiAnswer(text) {
+        const blocks = String(text || "").trim().split(/\n{2,}/).filter(Boolean);
+        if (!blocks.length) return "<p>暂无 AI 讲解。</p>";
+        return blocks.map((block) => {
+          const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+          if (!lines.length) return "";
+          if (lines.length === 1 && /^#{1,3}\s+/.test(lines[0])) {
+            return `<h3>${formatAiInline(lines[0].replace(/^#{1,3}\s+/, ""))}</h3>`;
+          }
+          if (/^#{1,3}\s+/.test(lines[0])) {
+            const heading = `<h3>${formatAiInline(lines[0].replace(/^#{1,3}\s+/, ""))}</h3>`;
+            const body = lines.slice(1).map((line) => formatAiInline(line)).join("<br>");
+            return `${heading}${body ? `<p>${body}</p>` : ""}`;
+          }
+          if (lines.every((line) => /^[-*]\s+/.test(line))) {
+            return `<ul>${lines.map((line) => `<li>${formatAiInline(line.replace(/^[-*]\s+/, ""))}</li>`).join("")}</ul>`;
+          }
+          if (lines.every((line) => /^\d+[.、)]\s+/.test(line))) {
+            return `<ol>${lines.map((line) => `<li>${formatAiInline(line.replace(/^\d+[.、)]\s+/, ""))}</li>`).join("")}</ol>`;
+          }
+          return `<p>${lines.map((line) => formatAiInline(line.replace(/^#{1,3}\s+/, ""))).join("<br>")}</p>`;
+        }).join("");
+      }
+
+      function renderAiPanel() {
+        const question = currentQuestion();
+        const cached = question ? state.aiCache[question.id] : null;
+        el.aiPanel.classList.toggle("is-visible", state.aiPanelVisible);
+        el.aiPanel.setAttribute("aria-busy", String(state.aiLoading));
+        el.aiExplainBtn.classList.toggle("is-active", state.aiPanelVisible);
+        el.aiExplainBtn.disabled = state.aiLoading;
+        el.aiAnswer.classList.toggle("is-loading", state.aiLoading);
+
+        if (!state.aiPanelVisible) {
+          el.aiAnswer.textContent = "";
+        } else if (state.aiLoading) {
+          el.aiAnswer.textContent = "AI 正在整理解析和答题规律...";
+        } else if (cached?.error) {
+          el.aiAnswer.innerHTML = `<p>${escapeText(cached.error)}</p>`;
+        } else if (cached?.content) {
+          el.aiAnswer.innerHTML = formatAiAnswer(cached.content);
+        } else {
+          el.aiAnswer.textContent = "暂无 AI 讲解。";
+        }
+      }
+
+      function buildAiPrompt(question) {
+        const saved = state.answers[question.id];
+        const selected = saved
+          ? `${question.options[saved.selectedIndex]?.label || "?"}. ${question.options[saved.selectedIndex]?.value || ""}`
+          : (state.studyMode ? "背题模式，用户没有选择选项" : "用户还没有作答");
+        const options = question.options.map((option) => `${option.label}. ${option.value}`).join("\n");
+        const officialExplanation = question.explanation || "暂无官方解析";
+        const tags = question.tags.length ? question.tags.join("、") : UNTAGGED_LABEL;
+        const images = question.images.length ? question.images.join("\n") : "无";
+
+        return `请为这道中国机动车驾驶证科目一题提供应试讲解。
+
+题目：${question.title}
+题型：${question.type}
+章节：${tags}
+难度：${question.difficulty}
+选项：
+${options}
+正确答案：${question.correctLabels.join("、")}
+用户当前选择：${selected}
+官方解析：${officialExplanation}
+题目图片链接：${images}
+
+要求：
+1. 用简体中文回答，控制在 500 字以内。
+2. 必须先明确结论和正确答案。
+3. 结合官方解析解释为什么选这个答案，并说明其他选项容易错在哪里。
+4. 提炼可迁移的答题规律或口诀，帮助用户遇到同类题快速判断。
+5. 如果图片链接无法直接判断，请提醒用户按题干和交通规则判断。
+6. 不要输出思维链，只输出面向考生的最终讲解。`;
+      }
+
+      async function askAiExplanation() {
+        const question = currentQuestion();
+        if (!question || state.aiLoading) return;
+
+        const liveApiKey = el.deepseekKey.value.trim();
+        if (liveApiKey !== state.ai.apiKey) {
+          state.ai.apiKey = liveApiKey;
+          saveAiSettings();
+        }
+
+        if (!state.ai.apiKey.trim()) {
+          showToast("请先填写 DeepSeek Key");
+          el.deepseekKey.focus();
+          return;
+        }
+
+        state.aiPanelVisible = true;
+        if (state.aiCache[question.id]?.content) {
+          renderAiPanel();
+          return;
+        }
+
+        state.aiLoading = true;
+        renderAiPanel();
+
+        try {
+          const requestBody = {
+            model: state.ai.model,
+            messages: [
+              {
+                role: "system",
+                content: "你是经验丰富的中国驾考科目一教练，擅长把法规题讲成应试规律。你只输出最终讲解，不输出隐藏推理过程。"
+              },
+              {
+                role: "user",
+                content: buildAiPrompt(question)
+              }
+            ],
+            thinking: {
+              type: state.ai.thinking ? "enabled" : "disabled"
+            },
+            max_tokens: 1200,
+            stream: false
+          };
+          if (state.ai.thinking) requestBody.reasoning_effort = "high";
+
+          const response = await fetch(DEEPSEEK_API_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${state.ai.apiKey.trim()}`
+            },
+            body: JSON.stringify(requestBody)
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(data.error?.message || `DeepSeek 请求失败（${response.status}）`);
+          }
+          const content = data.choices?.[0]?.message?.content?.trim();
+          if (!content) throw new Error("AI 没有返回讲解内容");
+          state.aiCache[question.id] = {
+            content,
+            updatedAt: Date.now()
+          };
+        } catch (error) {
+          state.aiCache[question.id] = {
+            error: error.message || "AI 讲解失败，请稍后重试。"
+          };
+          showToast("AI 讲解失败");
+        } finally {
+          state.aiLoading = false;
+          renderAiPanel();
+        }
       }
 
       function renderMap() {
@@ -2205,6 +2508,25 @@
           state.autoNext = el.autoNextToggle.checked;
           saveStore();
         });
+        el.deepseekKey.addEventListener("change", () => {
+          state.ai.apiKey = el.deepseekKey.value.trim();
+          saveAiSettings();
+          showToast(state.ai.apiKey ? "DeepSeek Key 已保存" : "DeepSeek Key 已清空");
+        });
+        el.aiModel.addEventListener("change", () => {
+          state.ai.model = el.aiModel.value === "deepseek-v4-flash" ? "deepseek-v4-flash" : "deepseek-v4-pro";
+          saveAiSettings();
+        });
+        el.aiThinkingToggle.addEventListener("change", () => {
+          state.ai.thinking = el.aiThinkingToggle.checked;
+          saveAiSettings();
+        });
+        el.clearAiKeyBtn.addEventListener("click", () => {
+          state.ai.apiKey = "";
+          el.deepseekKey.value = "";
+          saveAiSettings();
+          showToast("DeepSeek Key 已清除");
+        });
         el.focusBtn.addEventListener("click", () => setFocusMode(!state.focusMode));
         el.focusPrevBtn.addEventListener("click", prevQuestion);
         el.focusNextBtn.addEventListener("click", nextQuestion);
@@ -2219,6 +2541,11 @@
           }
           state.showExplanation = !state.showExplanation;
           renderQuestion();
+        });
+        el.aiExplainBtn.addEventListener("click", askAiExplanation);
+        el.aiCloseBtn.addEventListener("click", () => {
+          state.aiPanelVisible = false;
+          renderAiPanel();
         });
         el.bookmarkBtn.addEventListener("click", toggleBookmark);
         el.shuffleBtn.addEventListener("click", () => {
