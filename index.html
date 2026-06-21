@@ -620,7 +620,7 @@
 
     body.focus-mode .question-title {
       align-self: end;
-      font-size: clamp(24px, calc(4vw * var(--focus-scale)), 48px);
+      font-size: clamp(calc(24px * var(--focus-scale)), calc(4vw * var(--focus-scale)), calc(48px * var(--focus-scale)));
       line-height: 1.28;
       text-align: left;
     }
@@ -652,8 +652,13 @@
       grid-template-columns: calc(44px * var(--focus-scale)) minmax(0, 1fr);
       min-height: auto;
       padding: calc(14px * var(--focus-scale)) calc(18px * var(--focus-scale));
-      font-size: clamp(17px, calc(2.2vw * var(--focus-scale)), 28px);
+      font-size: clamp(calc(17px * var(--focus-scale)), calc(2.2vw * var(--focus-scale)), calc(28px * var(--focus-scale)));
       line-height: 1.34;
+    }
+
+    body.focus-mode.focus-scroll .question-body {
+      align-content: start;
+      overflow-y: auto;
     }
 
     body.focus-mode .option-button .label {
@@ -1113,17 +1118,18 @@
 
       body.focus-mode .question-body {
         width: calc(100vw - 32px);
-        padding: calc(84px * var(--focus-scale)) 0 calc(76px * var(--focus-scale));
-        gap: calc(14px * var(--focus-scale));
+        padding: calc(64px * var(--focus-scale)) 0 calc(60px * var(--focus-scale));
+        gap: calc(10px * var(--focus-scale));
       }
 
       body.focus-mode .question-title {
-        font-size: clamp(20px, calc(7vw * var(--focus-scale)), 32px);
+        font-size: clamp(calc(18px * var(--focus-scale)), calc(6.2vw * var(--focus-scale)), calc(32px * var(--focus-scale)));
       }
 
       body.focus-mode .option-button {
         grid-template-columns: calc(38px * var(--focus-scale)) minmax(0, 1fr);
-        font-size: clamp(15px, calc(5vw * var(--focus-scale)), 22px);
+        padding: calc(10px * var(--focus-scale)) calc(12px * var(--focus-scale));
+        font-size: clamp(calc(14px * var(--focus-scale)), calc(4.6vw * var(--focus-scale)), calc(22px * var(--focus-scale)));
       }
 
       body.focus-mode .option-button .label {
@@ -1638,18 +1644,29 @@
       }
 
       function fitFocusQuestion() {
-        document.body.classList.remove("focus-tight", "focus-ultra");
+        document.body.classList.remove("focus-tight", "focus-ultra", "focus-scroll");
         const body = document.querySelector(".question-body");
         body?.style.removeProperty("--focus-scale");
         if (!state.focusMode) return;
-        const panel = el.questionPanel;
         requestAnimationFrame(() => {
-          if (!body || panel.scrollHeight <= panel.clientHeight + 1) return;
+          if (!body) return;
+          const getOverflow = () => {
+            const bodyRect = body.getBoundingClientRect();
+            const childOverflow = [...body.children].reduce((max, child) => {
+              if (!(child instanceof HTMLElement) || getComputedStyle(child).display === "none") return max;
+              const rect = child.getBoundingClientRect();
+              return Math.max(max, rect.bottom - bodyRect.bottom, bodyRect.top - rect.top);
+            }, 0);
+            return Math.max(0, body.scrollHeight - body.clientHeight, childOverflow);
+          };
+          if (getOverflow() <= 1) return;
           let scale = 1;
-          for (let attempt = 0; attempt < 4 && panel.scrollHeight > panel.clientHeight + 1; attempt += 1) {
-            scale = Math.max(.48, scale * (panel.clientHeight / panel.scrollHeight) * .94);
+          for (let attempt = 0; attempt < 8 && getOverflow() > 1; attempt += 1) {
+            const neededHeight = body.clientHeight + getOverflow();
+            scale = Math.max(.36, scale * (body.clientHeight / neededHeight) * .96);
             body.style.setProperty("--focus-scale", scale.toFixed(3));
           }
+          document.body.classList.toggle("focus-scroll", getOverflow() > 1);
         });
       }
 
