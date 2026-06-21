@@ -38,7 +38,6 @@
       background: var(--bg);
       color: var(--text);
       letter-spacing: 0;
-      overscroll-behavior-y: contain;
     }
 
     body {
@@ -2036,7 +2035,7 @@
         saveStore();
         renderQuestion();
         renderStats();
-        renderMap();
+        renderMap({ keepCurrentVisible: true });
       }
 
       function nextQuestion() {
@@ -2341,7 +2340,19 @@ ${options}
         }
       }
 
-      function renderMap() {
+      function keepCurrentMapButtonVisible() {
+        const current = el.questionMap.querySelector(".map-button.is-current");
+        if (!current) return;
+        const top = current.offsetTop;
+        const bottom = top + current.offsetHeight;
+        if (top < el.questionMap.scrollTop) {
+          el.questionMap.scrollTop = top;
+        } else if (bottom > el.questionMap.scrollTop + el.questionMap.clientHeight) {
+          el.questionMap.scrollTop = bottom - el.questionMap.clientHeight;
+        }
+      }
+
+      function renderMap(options = {}) {
         const total = state.questions.length;
         const buttons = [];
         for (let index = 0; index < total; index += 1) {
@@ -2360,9 +2371,7 @@ ${options}
         el.questionMap.querySelectorAll("[data-go]").forEach((button) => {
           button.addEventListener("click", () => goTo(Number(button.dataset.go)));
         });
-        requestAnimationFrame(() => {
-          el.questionMap.querySelector(".map-button.is-current")?.scrollIntoView({ block: "nearest", inline: "nearest" });
-        });
+        if (options.keepCurrentVisible) requestAnimationFrame(keepCurrentMapButtonVisible);
       }
 
       function jumpToInputQuestion() {
@@ -2576,8 +2585,7 @@ ${options}
         window.addEventListener("resize", () => {
           clearTimeout(resizeTimer);
           resizeTimer = setTimeout(() => {
-            renderMap();
-            fitFocusQuestion();
+            if (state.focusMode) fitFocusQuestion();
           }, 120);
         });
         document.addEventListener("fullscreenchange", () => {
